@@ -20,35 +20,10 @@ public class GetDatas {
 
 
     public static void main(String[] args) throws SQLException {
-        List cities = getAllCitiesInProvince("新疆");
+        List cities = getAllCitiesInProvince("新疆");//第一步获取了新疆，所有城市列表，
 
-//        for (int i = 0; i < pageAll; i++) {
-//            System.out.println("—————————————————————————————————————————————");
-//            System.out.println("第" + (i + 1) + "页");
-//            poiParam = "key=" + API_KEY + "&dtype=json&city=北京市" + "&page=" + (i + 1) + "&cid=1";
-//            String poiResult1 = SendGET(poiUrl, poiParam);
-//            JSONObject poiJson = JSONObject.fromObject(poiResult1);
-//            JSONArray data = poiJson.getJSONObject("result").getJSONArray("data");
-//            int size = data.size();
-//
-//            break;
-//            for (int j = 0; j < size; j++) {
-//                JSONObject item = data.getJSONObject(j);
-//                //id,title,addr,pro,city,tags,ty1,ty2,lng,lat
-//                String sql = "insert into bdpoi values('" + item.getString("id") + "','"
-//                        + item.getString("title") + "','"
-//                        + item.getString("address") + "','"
-//                        + item.getString("province") + "','"
-//                        + item.getString("city") + "','"
-//                        + item.getString("tags") + "',"
-//                        + item.getInt("type1") + ","
-//                        + item.getInt("type2") + ","
-//                        + item.getDouble("lng") + ","
-//                        + item.getDouble("lat") + ")";
-//                System.out.println("    " + sql);
-////                ConOrcl.runSql(sql);
-//            }
-//        }
+        
+
     }
 
     public static String SendGET(String url, String param) {
@@ -94,14 +69,23 @@ public class GetDatas {
      * @param province 省份名称
      * @return
      */
-    public static List<String> getAllCitiesInProvince(String province) {
-        List<String> cities = new ArrayList<String>();
+    public static List<City> getAllCitiesInProvince(String province) {
+        List<City> cities = new ArrayList<City>();
         String poiParam = "q=药店&region=" + province + "&output=json&ak=" + API_KEY + "&page_size=2";
         String result = SendGET(poiUrl, poiParam);
 
         JSONObject poiJsonroot = JSONObject.fromObject(result);
 
-        poiJsonroot.getJSONObject("results");
+        List<JSONObject> citys = poiJsonroot.getJSONArray("results");
+
+
+        for (int i = 0; i < citys.size(); i++) {
+            City tem = new City();
+            tem.name = citys.get(i).getString("name");
+            tem.num = citys.get(i).getString("num");
+
+            cities.add(tem);
+        }
         return cities;
 
     }
