@@ -20,9 +20,17 @@ public class GetDatas {
 
 
     public static void main(String[] args) throws SQLException {
-        List cities = getAllCitiesInProvince("新疆");//第一步获取了新疆，所有城市列表，
+        List<City> cities = getAllCitiesInProvince("新疆");//第一步获取了新疆，所有城市列表，
 
-        
+        for (int i = 0; i < cities.size(); i++) {//遍历每个城市的药店
+            City currentCity = cities.get(i);
+            if (currentCity == null) continue;
+
+            getDrugList(currentCity.name);
+
+            break;//just test one row
+        }
+
 
     }
 
@@ -62,6 +70,34 @@ public class GetDatas {
         return result;
     }
 
+
+    /**
+     * 获取某一个城市的药店信息
+     *
+     * @param cityname
+     * @return
+     */
+    public static List<City> getDrugList(String cityname) {
+
+        List<City> cities = new ArrayList<City>();
+        String poiParam = "q=药店&region=" + cityname + "&output=json&ak=" + API_KEY + "&page_size=20&page_num=80";
+        String result = SendGET(poiUrl, poiParam);
+
+        JSONObject poiJsonroot = JSONObject.fromObject(result);
+
+        List<JSONObject> citys = poiJsonroot.getJSONArray("results");
+
+
+        for (int i = 0; i < citys.size(); i++) {
+            City tem = new City();
+            tem.name = citys.get(i).getString("name");
+            tem.num = citys.get(i).getString("num");
+
+            cities.add(tem);
+        }
+        return cities;
+
+    }
 
     /**
      * 获取某一省的所有城市名
