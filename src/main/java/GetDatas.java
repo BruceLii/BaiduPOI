@@ -1,3 +1,4 @@
+import model.StoreModel;
 import net.sf.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -16,22 +17,47 @@ import java.util.List;
 public class GetDatas {
     public static String API_KEY = "ss0MByLM7edMu1jkedXGCP8QPC9579PP";
     public static String poiUrl = "http://api.map.baidu.com/place/v2/search";
-    public static String poiParam = "q=药店&region=新疆&output=json&ak=" + API_KEY + "&page_size=2";
+
+    public static final int PAGE_SIZE = 20;
+
+    public static int total_count = 0;
 
 
     public static void main(String[] args) throws SQLException {
-        List<City> cities = getAllCitiesInProvince("新疆");//第一步获取了新疆，所有城市列表，
+        long startTime = System.currentTimeMillis();
 
-        for (int i = 0; i < cities.size(); i++) {//遍历每个城市的药店
-            City currentCity = cities.get(i);
-            if (currentCity == null) continue;
+        //乌鲁木齐
+        Point lb = new Point(87.186354, 43.695967);
+        Point rt = new Point(87.870504, 43.984768);
+//        Point lb = new Point(72.863484, 35.761619);
+//        Point rt = new Point(91.003219, 49.11624);
 
-            getDrugList(currentCity.name);
+        Rectangle rectangle = new Rectangle(lb, rt);
+        rectangle.currentAreaName = "乌鲁木齐市";
+        getByBounds(rectangle);
 
-            break;//just test one row
+
+        long endTime = System.currentTimeMillis();
+        long costTime = endTime - startTime;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(costTime % 1000).append("毫秒");
+        if (costTime > 1000) {
+            costTime = costTime / 1000;
+            sb.insert(0, "秒");
+            sb.insert(0, costTime % 60);
         }
-
-
+        if (costTime > 60) {
+            costTime = costTime / 60;
+            sb.insert(0, "分钟");
+            sb.insert(0, costTime % 60);
+        }
+        if (costTime > 60) {
+            costTime = costTime / 60;
+            sb.insert(0, "小时");
+            sb.insert(0, costTime % 60);
+        }
+        System.out.println("任务耗时" + sb.toString());
     }
 
     public static String SendGET(String url, String param) {
@@ -80,7 +106,7 @@ public class GetDatas {
     public static List<City> getDrugList(String cityname) {
 
         List<City> cities = new ArrayList<City>();
-        String poiParam = "q=药店&region=" + cityname + "&output=json&ak=" + API_KEY + "&page_size=20&page_num=80";
+        String poiParam = "q=药店&region=" + cityname + "&scope=2&output=json&ak=" + API_KEY + "&page_size=20&page_num=19";
         String result = SendGET(poiUrl, poiParam);
 
         JSONObject poiJsonroot = JSONObject.fromObject(result);
@@ -89,11 +115,12 @@ public class GetDatas {
 
 
         for (int i = 0; i < citys.size(); i++) {
-            City tem = new City();
-            tem.name = citys.get(i).getString("name");
-            tem.num = citys.get(i).getString("num");
+            String storeName = citys.get(i).getString("name");
+            String address = citys.get(i).getString("address");
 
-            cities.add(tem);
+            String lat = citys.get(i).getJSONObject("location").getString("lat");
+            String lng = citys.get(i).getJSONObject("location").getString("lng");
+
         }
         return cities;
 
@@ -125,4 +152,101 @@ public class GetDatas {
         return cities;
 
     }
+
+    public static void getByBounds(String leftbottom, String righttop) {
+        String poiParam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop;
+        String result = SendGET(poiUrl, poiParam);
+
+        int total = 0;
+        if (total >= 400) {
+//                四分法切片
+
+        } else {
+
+        }
+    }
+
+    public static void getByBounds(Rectangle rectangle) {
+        if (rectangle == null) return;
+
+        Point lb = rectangle.leftbottom;
+        Point rt = rectangle.rightTop;
+
+        String leftbottom = lb.latitude + "," + lb.longitude;//先纬度，再经度
+        String righttop = rt.latitude + "," + rt.longitude;//先纬度，再经度
+
+        int currentPageIndex = 0;
+
+        String poiParam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+        String result = SendGET(poiUrl, poiParam);
+        JSONObject poiJsonroot = JSONObject.fromObject(result);
+
+        int total = poiJsonroot.getInt("total");
+        if (total >= 400) {
+//        if (total < 400) {//test
+//                四分法切片，切片后进入递归
+            double half_long = (lb.longitude + rt.longitude) / 2;
+            double half_lat = (lb.latitude + rt.latitude) / 2;
+
+//            新规划出的5个点，
+            Point centerPoint = new Point(half_long, half_lat);//中心点，
+
+            Point p1 = new Point(lb.longitude, half_lat);//左中
+            Point p2 = new Point(half_long, rt.latitude);//中上
+            Point p3 = new Point(half_long, lb.latitude);//中下
+            Point p4 = new Point(half_long, half_lat);//右中
+
+
+            List<Rectangle> areas = new ArrayList<Rectangle>();
+            areas.add(new Rectangle(rectangle.currentAreaName, lb, centerPoint));//
+            areas.add(new Rectangle(rectangle.currentAreaName, centerPoint, rt));//
+            areas.add(new Rectangle(rectangle.currentAreaName, p1, p2));//
+            areas.add(new Rectangle(rectangle.currentAreaName, p3, p4));//
+
+            for (int i = 0; i < areas.size(); i++) {
+                Rectangle current = areas.get(i);
+                getByBounds(current);//进入递归
+            }
+
+        } else {
+            //进入数采集，
+            int pages = total / PAGE_SIZE + 1;
+            List<StoreModel> storeModelList = new ArrayList<StoreModel>(20);
+
+            System.out.println("**************当前切片 " + "     " + rectangle.toString());
+
+            for (int i = 0; i < pages; i++) {
+                String pageparam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+                currentPageIndex++;//开始第二页的请求
+                String r = SendGET(poiUrl, pageparam);
+                JSONObject page = JSONObject.fromObject(r);
+                addPageData(page, storeModelList, rectangle.currentAreaName);
+            }
+            //先保存数据
+//            FileUtils.createCSV(storeModelList);
+            storeModelList.clear();
+            storeModelList = null;
+            currentPageIndex = 0;//set as default.
+        }
+    }
+
+    public static void addPageData(JSONObject page, List<StoreModel> storeModelList, String currentAreaName) {
+        List<JSONObject> stores = page.getJSONArray("results");
+        for (int k = 0; k < stores.size(); k++) {
+            StoreModel storeModel = new StoreModel();
+
+            storeModel.cityname = currentAreaName;
+            storeModel.storeName = stores.get(k).getString("name");
+            storeModel.address = stores.get(k).getString("address");
+            storeModel.longitude = stores.get(k).getJSONObject("location").getString("lng");
+            storeModel.latitude = stores.get(k).getJSONObject("location").getString("lat");
+
+            storeModelList.add(storeModel);
+
+            System.out.println("总计数： " + (total_count++) + "     " + storeModel.toString());
+        }
+
+    }
+
+
 }
