@@ -19,7 +19,7 @@ public class FileUtils {
         List<StoreModel> rowList = new ArrayList<StoreModel>(20);
 
         StoreModel header = new StoreModel();
-        header.cityname = "城市";
+        header.formatted_address = "城市";
         header.storeName = "药店名";
         header.address = "地址";
         header.longitude = "经度";
@@ -28,7 +28,7 @@ public class FileUtils {
 
         for (int i = 0; i < 10; i++) {
             StoreModel storeModel = new StoreModel();
-            storeModel.cityname = "beijing";
+            storeModel.formatted_address = "beijing";
             storeModel.latitude = "11";
             storeModel.longitude = "33";
             storeModel.address = "被广宁路";
@@ -93,7 +93,7 @@ public class FileUtils {
                 String rowStr;
                 switch (i) {
                     case 0:
-                        rowStr = sb.append("\"").append(model.cityname).append("\",").toString();
+                        rowStr = sb.append("\"").append(model.formatted_address).append("\",").toString();
                         csvWriter.append(rowStr);
                         break;
                     case 1:

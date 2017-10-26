@@ -1,3 +1,4 @@
+import NetConst.URLUtils;
 import model.StoreModel;
 import net.sf.json.JSONObject;
 import utils.FileUtils;
@@ -11,12 +12,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static NetConst.URLUtils.API_KEY;
+import static NetConst.URLUtils.sendURLWithParams;
+
 /**
  * Created by liyonglin on 2017/10/24.
  */
 
 public class GetDatas {
-    public static String API_KEY = "ss0MByLM7edMu1jkedXGCP8QPC9579PP";
+
     public static String poiUrl = "http://api.map.baidu.com/place/v2/search";
 
     public static final int PAGE_SIZE = 20;
@@ -165,8 +169,9 @@ public class GetDatas {
         String righttop = rt.latitude + "," + rt.longitude;//先纬度，再经度
 
         int currentPageIndex = 0;
-
         String poiParam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+
+
         String result = SendGET(poiUrl, poiParam);
         JSONObject poiJsonroot = JSONObject.fromObject(result);
 
@@ -181,11 +186,17 @@ public class GetDatas {
             Point centerPoint = new Point(half_long, half_lat);//中心点，
 
             Point p1 = new Point(lb.longitude, half_lat);//左中
+            Point p2 = new Point(half_long, rt.latitude);//中上
+            Point p3 = new Point(half_long, lb.latitude);//中下
             Point p4 = new Point(rt.longitude, half_lat);//右中
 
-            //2分法递归
-            getByBounds(new Rectangle(rectangle.currentAreaName, lb, p4));
-            getByBounds(new Rectangle(rectangle.currentAreaName, p1, rt));
+
+            //4分法递归 防止区域划分过于狭长
+            getByBounds(new Rectangle(rectangle.currentAreaName, lb, centerPoint));
+            getByBounds(new Rectangle(rectangle.currentAreaName, centerPoint, rt));
+
+            getByBounds(new Rectangle(rectangle.currentAreaName, p1, p2));
+            getByBounds(new Rectangle(rectangle.currentAreaName, p3, p4));
 
         } else {
             //进入数采集，
@@ -199,6 +210,7 @@ public class GetDatas {
                 currentPageIndex++;//开始第二页的请求
                 String r = SendGET(poiUrl, pageparam);
                 JSONObject page = JSONObject.fromObject(r);
+
                 addPageData(page, storeModelList, rectangle.currentAreaName);
             }
             //先保存数据
@@ -210,21 +222,44 @@ public class GetDatas {
     }
 
     public static void addPageData(JSONObject page, List<StoreModel> storeModelList, String currentAreaName) {
+
+
         List<JSONObject> stores = page.getJSONArray("results");
         for (int k = 0; k < stores.size(); k++) {
             StoreModel storeModel = new StoreModel();
-
-            storeModel.cityname = currentAreaName;
             storeModel.storeName = stores.get(k).getString("name");
             storeModel.address = stores.get(k).getString("address");
             storeModel.longitude = stores.get(k).getJSONObject("location").getString("lng");
             storeModel.latitude = stores.get(k).getJSONObject("location").getString("lat");
+
+            String area = getDistinct(storeModel.latitude, storeModel.longitude);
+            if (area == null || area.length() == 0) {
+                storeModel.formatted_address = currentAreaName;
+            } else {
+                storeModel.formatted_address = area;
+            }
 
             storeModelList.add(storeModel);
 
             System.out.println("总计数： " + (total_count++) + "     " + storeModel.toString());
         }
 
+    }
+
+    /**
+     * 获取新政区域区域信息
+     *
+     * @param latitude
+     * @param longtitude
+     * @return
+     */
+    public static String getDistinct(String latitude, String longtitude) {
+        String url = URLUtils.geoCodeReversURL(latitude, longtitude);
+        String r = sendURLWithParams(url);
+        JSONObject page = JSONObject.fromObject(r);
+        String formatedAddress = page.getJSONObject("result").getString("formatted_address");
+
+        return formatedAddress;
     }
 
 

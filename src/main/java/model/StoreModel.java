@@ -4,7 +4,11 @@ package model;
  * Created by liyonglin on 2017/10/25.
  */
 public class StoreModel {
-    public String cityname;
+    /**
+     * 简化地址，新疆维吾尔自治区乌鲁木齐市天山区赛马场路
+     */
+    public String formatted_address;
+
     public String storeName;
     public String address;
 
@@ -15,8 +19,8 @@ public class StoreModel {
     public String locationDetailURL;
 
 
-    public StoreModel(String cityname, String storeName, String address, String longti, String latitude,String locationDetailURL) {
-        this.cityname = cityname;
+    public StoreModel(String formatted_address, String storeName, String address, String longti, String latitude, String locationDetailURL) {
+        this.formatted_address = formatted_address;
         this.storeName = storeName;
         this.address = address;
         this.longitude = longti;
@@ -30,7 +34,7 @@ public class StoreModel {
 
     @Override
     public String toString() {
-        return cityname + "," +
+        return formatted_address + "," +
                 storeName + "," +
                 address + "," +
                 longitude + "," +
