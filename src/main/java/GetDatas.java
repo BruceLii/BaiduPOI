@@ -1,5 +1,6 @@
 import model.StoreModel;
 import net.sf.json.JSONObject;
+import utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -153,18 +154,6 @@ public class GetDatas {
 
     }
 
-    public static void getByBounds(String leftbottom, String righttop) {
-        String poiParam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop;
-        String result = SendGET(poiUrl, poiParam);
-
-        int total = 0;
-        if (total >= 400) {
-//                四分法切片
-
-        } else {
-
-        }
-    }
 
     public static void getByBounds(Rectangle rectangle) {
         if (rectangle == null) return;
@@ -192,38 +181,28 @@ public class GetDatas {
             Point centerPoint = new Point(half_long, half_lat);//中心点，
 
             Point p1 = new Point(lb.longitude, half_lat);//左中
-            Point p2 = new Point(half_long, rt.latitude);//中上
-            Point p3 = new Point(half_long, lb.latitude);//中下
-            Point p4 = new Point(half_long, half_lat);//右中
+            Point p4 = new Point(rt.longitude, half_lat);//右中
 
-
-            List<Rectangle> areas = new ArrayList<Rectangle>();
-            areas.add(new Rectangle(rectangle.currentAreaName, lb, centerPoint));//
-            areas.add(new Rectangle(rectangle.currentAreaName, centerPoint, rt));//
-            areas.add(new Rectangle(rectangle.currentAreaName, p1, p2));//
-            areas.add(new Rectangle(rectangle.currentAreaName, p3, p4));//
-
-            for (int i = 0; i < areas.size(); i++) {
-                Rectangle current = areas.get(i);
-                getByBounds(current);//进入递归
-            }
+            //2分法递归
+            getByBounds(new Rectangle(rectangle.currentAreaName, lb, p4));
+            getByBounds(new Rectangle(rectangle.currentAreaName, p1, rt));
 
         } else {
             //进入数采集，
             int pages = total / PAGE_SIZE + 1;
             List<StoreModel> storeModelList = new ArrayList<StoreModel>(20);
 
-            System.out.println("**************当前切片 " + "     " + rectangle.toString());
+            System.out.println("**************当前切片区域药店总数 " + total + "     分页数{" + pages + "}     " + rectangle.toString());
 
             for (int i = 0; i < pages; i++) {
-                String pageparam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+                String pageparam = "q=药店&scope=2&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
                 currentPageIndex++;//开始第二页的请求
                 String r = SendGET(poiUrl, pageparam);
                 JSONObject page = JSONObject.fromObject(r);
                 addPageData(page, storeModelList, rectangle.currentAreaName);
             }
             //先保存数据
-//            FileUtils.createCSV(storeModelList);
+            FileUtils.writeIntoCSV(storeModelList);
             storeModelList.clear();
             storeModelList = null;
             currentPageIndex = 0;//set as default.

@@ -12,12 +12,16 @@ public class StoreModel {
     public String latitude;
 
 
-    public StoreModel(String cityname, String storeName, String address, String longti, String latitude) {
+    public String locationDetailURL;
+
+
+    public StoreModel(String cityname, String storeName, String address, String longti, String latitude,String locationDetailURL) {
         this.cityname = cityname;
         this.storeName = storeName;
         this.address = address;
         this.longitude = longti;
         this.latitude = latitude;
+        this.locationDetailURL = locationDetailURL;
     }
 
     public StoreModel() {
