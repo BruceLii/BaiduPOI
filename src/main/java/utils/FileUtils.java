@@ -36,20 +36,19 @@ public class FileUtils {
             rowList.add(storeModel);
         }
 
-        createCSV(rowList);
+        writeIntoCSV(rowList);
     }
 
 
     /**
      * 创建CSV文件
      */
-    public static void createCSV(List<StoreModel> headList) {
+    public static void writeIntoCSV(List<StoreModel> headList) {
         File csvFile = null;
         BufferedWriter csvWtriter = null;
         try {
             csvFile = new File(outPutPath + fileName);
-
-            if (!csvFile.exists()) {
+            if (!csvFile.exists()) {//不存在则创建
                 File parent = csvFile.getParentFile();
                 if (parent != null && !parent.exists()) {
                     parent.mkdirs();
@@ -59,8 +58,7 @@ public class FileUtils {
 
             // GB2312使正确读取分隔符","
             csvWtriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFile,true), "GB2312"), 1024);
-
-            writeRow(headList, csvWtriter);
+            writeRow(headList, csvWtriter,csvFile);
             csvWtriter.flush();
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,36 +76,41 @@ public class FileUtils {
      *
      * @param row       数据列表
      * @param csvWriter
+     * @param csvFile
      * @throws IOException
      */
-    private static void writeRow(List<StoreModel> row, BufferedWriter csvWriter) throws IOException {
+    private static void writeRow(List<StoreModel> row, BufferedWriter csvWriter, File csvFile) throws IOException {
         for (int j = 0; j < row.size(); j++) {
             StoreModel model = row.get(j);
 
             for (int i = 0; i < 5; i++) {
                 StringBuffer sb = new StringBuffer();
 
+                int offset=0;
+                if (csvFile.length() > 0) {
+                    offset = (int) (csvFile.length() - 1);
+                }
                 String rowStr;
                 switch (i) {
                     case 0:
                         rowStr = sb.append("\"").append(model.cityname).append("\",").toString();
-                        csvWriter.write(rowStr);
+                        csvWriter.append(rowStr);
                         break;
                     case 1:
                         rowStr = sb.append("\"").append(model.storeName).append("\",").toString();
-                        csvWriter.write(rowStr);
+                       csvWriter.append(rowStr);
                         break;
                     case 2:
                         rowStr = sb.append("\"").append(model.address).append("\",").toString();
-                        csvWriter.write(rowStr);
+                       csvWriter.append(rowStr);
                         break;
                     case 3:
                         rowStr = sb.append("\"").append(model.longitude).append("\",").toString();
-                        csvWriter.write(rowStr);
+                       csvWriter.append(rowStr);
                         break;
                     case 4:
                         rowStr = sb.append("\"").append(model.latitude).append("\",").toString();
-                        csvWriter.write(rowStr);
+                       csvWriter.append(rowStr);
                         break;
                 }
 
