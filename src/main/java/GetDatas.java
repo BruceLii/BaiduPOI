@@ -1,19 +1,14 @@
 import NetConst.URLUtils;
+import model.Area;
 import model.StoreModel;
 import net.sf.json.JSONObject;
 import utils.FileUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static NetConst.URLUtils.API_KEY;
-import static NetConst.URLUtils.sendURLWithParams;
+import static NetConst.URLUtils.*;
 
 /**
  * Created by liyonglin on 2017/10/24.
@@ -28,135 +23,6 @@ public class GetDatas {
     public static int total_count = 0;
 
 
-    public static void main(String[] args) throws SQLException {
-        long startTime = System.currentTimeMillis();
-
-        //乌鲁木齐
-        Point lb = new Point(87.186354, 43.695967);
-        Point rt = new Point(87.870504, 43.984768);
-//        Point lb = new Point(72.863484, 35.761619);
-//        Point rt = new Point(91.003219, 49.11624);
-
-        Rectangle rectangle = new Rectangle(lb, rt);
-        rectangle.currentAreaName = "乌鲁木齐市";
-        getByBounds(rectangle);
-
-
-        long endTime = System.currentTimeMillis();
-        long costTime = endTime - startTime;
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(costTime % 1000).append("毫秒");
-        if (costTime > 1000) {
-            costTime = costTime / 1000;
-            sb.insert(0, "秒");
-            sb.insert(0, costTime % 60);
-        }
-        if (costTime > 60) {
-            costTime = costTime / 60;
-            sb.insert(0, "分钟");
-            sb.insert(0, costTime % 60);
-        }
-        if (costTime > 60) {
-            costTime = costTime / 60;
-            sb.insert(0, "小时");
-            sb.insert(0, costTime % 60);
-        }
-        System.out.println("任务耗时" + sb.toString());
-    }
-
-    public static String SendGET(String url, String param) {
-        String result = "";//访问返回结果
-        BufferedReader read = null;//读取访问结果
-        try {
-            //创建url
-            URL realurl = new URL(url + "?" + param);
-            //打开连接
-            URLConnection connection = realurl.openConnection();
-            // 设置通用的请求属性
-            connection.setRequestProperty("accept", "*/*");
-            connection.setRequestProperty("connection", "Keep-Alive");
-            connection.setRequestProperty("user-agent",
-                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
-            //建立连接
-            connection.connect();
-            // 定义 BufferedReader输入流来读取URL的响应
-            read = new BufferedReader(new InputStreamReader(
-                    connection.getInputStream(), "UTF-8"));
-            String line;//循环读取
-            while ((line = read.readLine()) != null) {
-                result += line;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (read != null) {//关闭流
-                try {
-                    read.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return result;
-    }
-
-
-    /**
-     * 获取某一个城市的药店信息
-     *
-     * @param cityname
-     * @return
-     */
-    public static List<City> getDrugList(String cityname) {
-
-        List<City> cities = new ArrayList<City>();
-        String poiParam = "q=药店&region=" + cityname + "&scope=2&output=json&ak=" + API_KEY + "&page_size=20&page_num=19";
-        String result = SendGET(poiUrl, poiParam);
-
-        JSONObject poiJsonroot = JSONObject.fromObject(result);
-
-        List<JSONObject> citys = poiJsonroot.getJSONArray("results");
-
-
-        for (int i = 0; i < citys.size(); i++) {
-            String storeName = citys.get(i).getString("name");
-            String address = citys.get(i).getString("address");
-
-            String lat = citys.get(i).getJSONObject("location").getString("lat");
-            String lng = citys.get(i).getJSONObject("location").getString("lng");
-
-        }
-        return cities;
-
-    }
-
-    /**
-     * 获取某一省的所有城市名
-     *
-     * @param province 省份名称
-     * @return
-     */
-    public static List<City> getAllCitiesInProvince(String province) {
-        List<City> cities = new ArrayList<City>();
-        String poiParam = "q=药店&region=" + province + "&output=json&ak=" + API_KEY + "&page_size=2";
-        String result = SendGET(poiUrl, poiParam);
-
-        JSONObject poiJsonroot = JSONObject.fromObject(result);
-
-        List<JSONObject> citys = poiJsonroot.getJSONArray("results");
-
-
-        for (int i = 0; i < citys.size(); i++) {
-            City tem = new City();
-            tem.name = citys.get(i).getString("name");
-            tem.num = citys.get(i).getString("num");
-
-            cities.add(tem);
-        }
-        return cities;
-
-    }
 
 
     public static void getByBounds(Rectangle rectangle) {
@@ -176,8 +42,8 @@ public class GetDatas {
         JSONObject poiJsonroot = JSONObject.fromObject(result);
 
         int total = poiJsonroot.getInt("total");
+        System.out.println("当前区域 ----->"+rectangle);
         if (total >= 400) {
-//        if (total < 400) {//test
 //                四分法切片，切片后进入递归
             double half_long = (lb.longitude + rt.longitude) / 2;
             double half_lat = (lb.latitude + rt.latitude) / 2;
@@ -194,19 +60,32 @@ public class GetDatas {
             //4分法递归 防止区域划分过于狭长
             getByBounds(new Rectangle(rectangle.currentAreaName, lb, centerPoint));
             getByBounds(new Rectangle(rectangle.currentAreaName, centerPoint, rt));
-
             getByBounds(new Rectangle(rectangle.currentAreaName, p1, p2));
             getByBounds(new Rectangle(rectangle.currentAreaName, p3, p4));
 
+//            Rectangle r1 = new Rectangle(rectangle.currentAreaName, lb, p4);
+//            Rectangle r2 = new Rectangle(rectangle.currentAreaName, p1, rt);
+//            System.out.println("当前区域划分出2个切片 ----->"+r1+"----->"+r2);
+////
+//            getByBounds(r1);
+//            getByBounds(r2);
+
         } else {
+
+
             //进入数采集，
-            int pages = total / PAGE_SIZE + 1;
+            int pages = 0;
+            if (total % PAGE_SIZE == 0) {
+                pages = total / PAGE_SIZE;
+            } else {
+                pages = total / PAGE_SIZE + 1;
+            }
             List<StoreModel> storeModelList = new ArrayList<StoreModel>(20);
 
-            System.out.println("**************当前切片区域药店总数 " + total + "     分页数{" + pages + "}     " + rectangle.toString());
+            System.out.println("**************当前切片区域药店总数 " + total + "     分页数{" + pages + "}     currentPageIndex" + currentPageIndex + "  " + rectangle.toString());
 
             for (int i = 0; i < pages; i++) {
-                String pageparam = "q=药店&scope=2&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+                String pageparam = "q=药店&scope=1&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
                 currentPageIndex++;//开始第二页的请求
                 String r = SendGET(poiUrl, pageparam);
                 JSONObject page = JSONObject.fromObject(r);
@@ -227,20 +106,34 @@ public class GetDatas {
         List<JSONObject> stores = page.getJSONArray("results");
         for (int k = 0; k < stores.size(); k++) {
             StoreModel storeModel = new StoreModel();
-            storeModel.storeName = stores.get(k).getString("name");
-            storeModel.address = stores.get(k).getString("address");
-            storeModel.longitude = stores.get(k).getJSONObject("location").getString("lng");
-            storeModel.latitude = stores.get(k).getJSONObject("location").getString("lat");
-
-            String area = getDistinct(storeModel.latitude, storeModel.longitude);
-            if (area == null || area.length() == 0) {
-                storeModel.formatted_address = currentAreaName;
-            } else {
-                storeModel.formatted_address = area;
+            if (stores.get(k).containsKey("name")) {
+                storeModel.storeName = stores.get(k).getString("name");
             }
 
-            storeModelList.add(storeModel);
+            if (stores.get(k).containsKey("location") && stores.get(k).getJSONObject("location").containsKey("lng") && stores.get(k).getJSONObject("location").containsKey("lat")) {
+                storeModel.longitude = stores.get(k).getJSONObject("location").getString("lng");
+                storeModel.latitude = stores.get(k).getJSONObject("location").getString("lat");
+                Area area = getDistinct(storeModel.latitude, storeModel.longitude);
 
+                if (area == null || !area.country.equals(Area.CHINA) || !area.province.equals(Area.XINJIANG)) {//不属于新疆维吾尔
+                    System.out.println("非新疆地区药店   ****      " + storeModel.longitude + " , " + storeModel.latitude);
+//                if (area == null || !area.country.equals(Area.CHINA) || !area.province.equals(Area.XINJIANG) || !area.city.equals(Area.WLMQ)) {//不属于新疆维吾尔
+                    continue;
+                }
+
+                if (area.formatted_address.length() == 0) {
+                    storeModel.formatted_address = currentAreaName;
+                } else {
+                    storeModel.formatted_address = area.formatted_address;
+                }
+            }
+
+            if (stores.get(k).containsKey("address")) {
+                storeModel.address = stores.get(k).getString("address");
+            }
+
+
+            storeModelList.add(storeModel);
             System.out.println("总计数： " + (total_count++) + "     " + storeModel.toString());
         }
 
@@ -253,13 +146,26 @@ public class GetDatas {
      * @param longtitude
      * @return
      */
-    public static String getDistinct(String latitude, String longtitude) {
+    public static Area getDistinct(String latitude, String longtitude) {
         String url = URLUtils.geoCodeReversURL(latitude, longtitude);
         String r = sendURLWithParams(url);
         JSONObject page = JSONObject.fromObject(r);
-        String formatedAddress = page.getJSONObject("result").getString("formatted_address");
 
-        return formatedAddress;
+        if (page == null) return null;
+
+        Area result = new Area();
+        JSONObject object = page.getJSONObject("result");
+
+        if (object == null) return null;
+
+        result.formatted_address = object.getString("formatted_address");
+
+        result.country = object.getJSONObject("addressComponent").getString("country");
+        result.province = object.getJSONObject("addressComponent").getString("province");//目前只需筛选到省，自治区
+        result.city = object.getJSONObject("addressComponent").getString("city");//目前只需筛选到省，自治区
+
+
+        return result;
     }
 
 

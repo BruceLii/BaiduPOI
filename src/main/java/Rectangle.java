@@ -6,7 +6,7 @@ public class Rectangle {
     /**
      * 当前区域名，
      */
-    public String currentAreaName;
+    public String currentAreaName="";
     public Point leftbottom;
     public Point rightTop;
 
@@ -23,10 +23,6 @@ public class Rectangle {
 
     @Override
     public String toString() {
-        return "Rectangle{" +
-                "'" + currentAreaName + '\'' +
-                "," + leftbottom +
-                ", " + rightTop +
-                '}';
+        return "Rectangle{" + leftbottom + ", " + rightTop + '}';
     }
 }

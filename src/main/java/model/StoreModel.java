@@ -7,13 +7,13 @@ public class StoreModel {
     /**
      * 简化地址，新疆维吾尔自治区乌鲁木齐市天山区赛马场路
      */
-    public String formatted_address;
+    public String formatted_address = "";
 
-    public String storeName;
-    public String address;
+    public String storeName = "";
+    public String address = "";
 
-    public String longitude;
-    public String latitude;
+    public String longitude = "";
+    public String latitude = "";
 
 
     public String locationDetailURL;
