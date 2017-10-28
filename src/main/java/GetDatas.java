@@ -1,14 +1,16 @@
 import NetConst.URLUtils;
 import model.Area;
+import model.Point;
+import model.Rectangle;
 import model.StoreModel;
 import net.sf.json.JSONObject;
 import utils.FileUtils;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static NetConst.URLUtils.*;
+import static NetConst.URLUtils.API_KEY;
+import static NetConst.URLUtils.sendURLWithParams;
 
 /**
  * Created by liyonglin on 2017/10/24.
@@ -23,8 +25,6 @@ public class GetDatas {
     public static int total_count = 0;
 
 
-
-
     public static void getByBounds(Rectangle rectangle) {
         if (rectangle == null) return;
 
@@ -35,14 +35,15 @@ public class GetDatas {
         String righttop = rt.latitude + "," + rt.longitude;//先纬度，再经度
 
         int currentPageIndex = 0;
-        String poiParam = "q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+        String poiParam = "?q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
 
 
-        String result = SendGET(poiUrl, poiParam);
+        String result = sendURLWithParams(poiUrl + poiParam);
+
         JSONObject poiJsonroot = JSONObject.fromObject(result);
 
         int total = poiJsonroot.getInt("total");
-        System.out.println("当前区域 ----->"+rectangle);
+        System.out.println("当前区域 ----->" + rectangle);
         if (total >= 400) {
 //                四分法切片，切片后进入递归
             double half_long = (lb.longitude + rt.longitude) / 2;
@@ -58,17 +59,17 @@ public class GetDatas {
 
 
             //4分法递归 防止区域划分过于狭长
-            getByBounds(new Rectangle(rectangle.currentAreaName, lb, centerPoint));
-            getByBounds(new Rectangle(rectangle.currentAreaName, centerPoint, rt));
-            getByBounds(new Rectangle(rectangle.currentAreaName, p1, p2));
-            getByBounds(new Rectangle(rectangle.currentAreaName, p3, p4));
+//            getByBounds(new Rectangle(rectangle.currentAreaName, lb, centerPoint));
+//            getByBounds(new Rectangle(rectangle.currentAreaName, centerPoint, rt));
+//            getByBounds(new Rectangle(rectangle.currentAreaName, p1, p2));
+//            getByBounds(new Rectangle(rectangle.currentAreaName, p3, p4));
 
-//            Rectangle r1 = new Rectangle(rectangle.currentAreaName, lb, p4);
-//            Rectangle r2 = new Rectangle(rectangle.currentAreaName, p1, rt);
+            model.Rectangle r1 = new model.Rectangle(rectangle.currentAreaName, lb, p4);
+            model.Rectangle r2 = new model.Rectangle(rectangle.currentAreaName, p1, rt);
 //            System.out.println("当前区域划分出2个切片 ----->"+r1+"----->"+r2);
 ////
-//            getByBounds(r1);
-//            getByBounds(r2);
+            getByBounds(r1);
+            getByBounds(r2);
 
         } else {
 
@@ -85,9 +86,9 @@ public class GetDatas {
             System.out.println("**************当前切片区域药店总数 " + total + "     分页数{" + pages + "}     currentPageIndex" + currentPageIndex + "  " + rectangle.toString());
 
             for (int i = 0; i < pages; i++) {
-                String pageparam = "q=药店&scope=1&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+                String pageparam = "?q=药店&scope=1&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
                 currentPageIndex++;//开始第二页的请求
-                String r = SendGET(poiUrl, pageparam);
+                String r = sendURLWithParams(poiUrl + pageparam);
                 JSONObject page = JSONObject.fromObject(r);
 
                 addPageData(page, storeModelList, rectangle.currentAreaName);
@@ -115,8 +116,9 @@ public class GetDatas {
                 storeModel.latitude = stores.get(k).getJSONObject("location").getString("lat");
                 Area area = getDistinct(storeModel.latitude, storeModel.longitude);
 
-                if (area == null || !area.country.equals(Area.CHINA) || !area.province.equals(Area.XINJIANG)) {//不属于新疆维吾尔
-                    System.out.println("非新疆地区药店   ****      " + storeModel.longitude + " , " + storeModel.latitude);
+                if (area == null || !area.province.equals(Area.XINJIANG)) {//不属于新疆维吾尔
+//                if (area == null || !area.country.equals(Area.CHINA) || !area.province.equals(Area.XINJIANG)||!area.city.equals(WLMQ)) {//不属于新疆维吾尔
+                    System.out.println("非新疆地区药店   ****      " + area.toString() + storeModel.longitude + " , " + storeModel.latitude);
 //                if (area == null || !area.country.equals(Area.CHINA) || !area.province.equals(Area.XINJIANG) || !area.city.equals(Area.WLMQ)) {//不属于新疆维吾尔
                     continue;
                 }

@@ -1,3 +1,7 @@
+package model;
+
+import model.Point;
+
 /**
  * Created by liyonglin on 2017/10/25.
  * 矩形区域
@@ -23,6 +27,6 @@ public class Rectangle {
 
     @Override
     public String toString() {
-        return "Rectangle{" + leftbottom + ", " + rightTop + '}';
+        return "model.Rectangle{" + leftbottom + ", " + rightTop + '}';
     }
 }
