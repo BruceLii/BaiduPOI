@@ -10,7 +10,6 @@ public class StoreModel {
     public String formatted_address = "";
 
     public String storeName = "";
-    public String address = "";
 
     public String longitude = "";
     public String latitude = "";
@@ -18,15 +17,8 @@ public class StoreModel {
 
     public String locationDetailURL;
 
+    public Area areaInfo = null;
 
-    public StoreModel(String formatted_address, String storeName, String address, String longti, String latitude, String locationDetailURL) {
-        this.formatted_address = formatted_address;
-        this.storeName = storeName;
-        this.address = address;
-        this.longitude = longti;
-        this.latitude = latitude;
-        this.locationDetailURL = locationDetailURL;
-    }
 
     public StoreModel() {
 
@@ -34,10 +26,13 @@ public class StoreModel {
 
     @Override
     public String toString() {
-        return formatted_address + "," +
-                storeName + "," +
-                address + "," +
-                longitude + "," +
-                latitude;
+        return "StoreModel{" +
+                "formatted_address='" + formatted_address + '\'' +
+                ", storeName='" + storeName + '\'' +
+                ", longitude='" + longitude + '\'' +
+                ", latitude='" + latitude + '\'' +
+                ", locationDetailURL='" + locationDetailURL + '\'' +
+                ", areaInfo=" + areaInfo +
+                '}';
     }
 }

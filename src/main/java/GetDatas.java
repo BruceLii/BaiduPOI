@@ -17,6 +17,8 @@ import static NetConst.URLUtils.sendURLWithParams;
  */
 
 public class GetDatas {
+    //    public static final String keyword = "药店";
+    public static final String keyword = "诊所";
 
     public static String poiUrl = "http://api.map.baidu.com/place/v2/search";
 
@@ -35,7 +37,7 @@ public class GetDatas {
         String righttop = rt.latitude + "," + rt.longitude;//先纬度，再经度
 
         int currentPageIndex = 0;
-        String poiParam = "?q=药店&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+        String poiParam = "?q=" + keyword + "&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
 
 
         String result = sendURLWithParams(poiUrl + poiParam);
@@ -86,7 +88,7 @@ public class GetDatas {
             System.out.println("**************当前切片区域药店总数 " + total + "     分页数{" + pages + "}     currentPageIndex" + currentPageIndex + "  " + rectangle.toString());
 
             for (int i = 0; i < pages; i++) {
-                String pageparam = "?q=药店&scope=1&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
+                String pageparam = "?q=" + keyword + "&scope=1&output=json&ak=" + API_KEY + "&page_size=20&bounds=" + leftbottom + "," + righttop + "&page_num=" + currentPageIndex;
                 currentPageIndex++;//开始第二页的请求
                 String r = sendURLWithParams(poiUrl + pageparam);
                 JSONObject page = JSONObject.fromObject(r);
@@ -123,6 +125,8 @@ public class GetDatas {
                     continue;
                 }
 
+                storeModel.areaInfo = area;
+
                 if (area.formatted_address.length() == 0) {
                     storeModel.formatted_address = currentAreaName;
                 } else {
@@ -130,9 +134,9 @@ public class GetDatas {
                 }
             }
 
-            if (stores.get(k).containsKey("address")) {
-                storeModel.address = stores.get(k).getString("address");
-            }
+//            if (stores.get(k).containsKey("address")) {
+//                storeModel.address = stores.get(k).getString("address");
+//            }
 
 
             storeModelList.add(storeModel);
@@ -162,10 +166,17 @@ public class GetDatas {
 
         result.formatted_address = object.getString("formatted_address");
 
-        result.country = object.getJSONObject("addressComponent").getString("country");
-        result.province = object.getJSONObject("addressComponent").getString("province");//目前只需筛选到省，自治区
-        result.city = object.getJSONObject("addressComponent").getString("city");//目前只需筛选到省，自治区
+        if (object.containsKey("addressComponent")) {
 
+            result.country = object.getJSONObject("addressComponent").getString("country");
+            result.province = object.getJSONObject("addressComponent").getString("province");//目前只需筛选到省，自治区
+            result.city = object.getJSONObject("addressComponent").getString("city");//目前只需筛选到省，自治区
+            result.district = object.getJSONObject("addressComponent").getString("district");//
+            result.town = object.getJSONObject("addressComponent").getString("town");//
+            result.street = object.getJSONObject("addressComponent").getString("street");//
+            result.street_number = object.getJSONObject("addressComponent").getString("street_number");//
+
+        }
 
         return result;
     }

@@ -25,7 +25,6 @@ public class Area {
     public static final String YL = "伊犁哈萨克自治州";
 
 
-
     /**
      * 地区综合命名
      */
@@ -46,20 +45,28 @@ public class Area {
      * 区，县
      */
     public String district = "";
+
+    public String town = "";//乡镇
+
     /**
      * 街道
      */
-    public String street = "";
+    public String street = "";//街道名（行政区划中的街道层级）
+
+    public String street_number = "";//街道门牌号
 
 
     @Override
     public String toString() {
         return "Area{" +
-                "country='" + country + '\'' +
+                "formatted_address='" + formatted_address + '\'' +
+                ", country='" + country + '\'' +
                 ", province='" + province + '\'' +
                 ", city='" + city + '\'' +
                 ", district='" + district + '\'' +
+                ", town='" + town + '\'' +
                 ", street='" + street + '\'' +
+                ", street_number='" + street_number + '\'' +
                 '}';
     }
 }

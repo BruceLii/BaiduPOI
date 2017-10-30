@@ -21,6 +21,7 @@ public class Cosnt {
      * 百度地图的最大跨度
      */
     public static final double DIS = 0.2;
+//    public static final double DIS = 2;
 
     public static void main(String[] args) {
 //        整个新疆区域

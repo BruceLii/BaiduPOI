@@ -1,10 +1,15 @@
 import NetConst.URLUtils;
+import model.Area;
 import model.Point;
 import model.Rectangle;
+import model.StoreModel;
 import utils.Cosnt;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+
+import static utils.FileUtils.writeIntoCSV;
 
 /**
  * Created by liyonglin on 2017/10/26.
@@ -14,6 +19,9 @@ public class Main {
 
     public static void main(String[] args) throws SQLException {
         long startTime = System.currentTimeMillis();
+
+        //write,表头
+        writeHeader();
 
         List<Rectangle> tasklist = getTaskList();
         for (int i = 0; i < tasklist.size(); i++) {
@@ -52,6 +60,30 @@ public class Main {
 
         return xinjiang;
 
+    }
+
+    public static void writeHeader() {
+        List<StoreModel> rowList = new ArrayList<StoreModel>(20);
+
+        StoreModel header = new StoreModel();
+        header.formatted_address = "综合地址";
+        header.storeName = "药店名";
+        header.longitude = "经度";
+        header.latitude = "纬度";
+
+
+        header.areaInfo = new Area();
+        header.areaInfo.province = "省份";
+        header.areaInfo.city = "市";
+        header.areaInfo.district = "区县";
+        header.areaInfo.town = "乡镇";
+        header.areaInfo.street = "街道";
+        header.areaInfo.street_number = "街道门牌号";
+//        header.areaInfo.adcode = "邮编代码";
+
+
+        rowList.add(header);
+        writeIntoCSV(rowList);
     }
 
 
